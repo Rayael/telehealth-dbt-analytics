@@ -1,0 +1,40 @@
+version: 2
+
+sources:
+  - name: bronze
+    description: >
+      Raw layer. Files are loaded as is (all columns as text) by
+      ingestion/generate_and_load.py. No cleaning happens here.
+    schema: bronze
+    tables:
+      - name: raw_patients
+        description: One row per patient version delivered. The same patient can appear more than once.
+        columns:
+          - name: patient_id
+            data_tests:
+              - not_null:
+                  config:
+                    severity: warn
+      - name: raw_doctors
+        description: One row per doctor.
+        columns:
+          - name: doctor_id
+            data_tests:
+              - unique:
+                  config:
+                    severity: warn
+              - not_null:
+                  config:
+                    severity: warn
+      - name: raw_consultations
+        description: One row per consultation delivered. Files can be delivered twice.
+        columns:
+          - name: consultation_id
+            description: Contains duplicates on purpose, silver removes them.
+            data_tests:
+              - not_null:
+                  config:
+                    severity: warn
+              - unique:
+                  config:
+                    severity: warn

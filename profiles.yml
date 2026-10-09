@@ -1,0 +1,7 @@
+telehealth:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: telehealth.duckdb
+      threads: 4

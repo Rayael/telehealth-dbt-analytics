@@ -1,0 +1,20 @@
+version: 2
+
+models:
+  - name: mart_daily_service_kpis
+    description: Daily service KPIs by channel. One row per day and channel.
+    columns:
+      - name: consultations
+        data_tests: [non_negative]
+      - name: referral_rate
+        data_tests:
+          - value_between:
+              arguments:
+                min_value: 0
+                max_value: 1
+
+  - name: mart_doctor_monthly
+    description: Monthly activity by doctor. One row per doctor and month.
+    columns:
+      - name: consultations
+        data_tests: [non_negative]

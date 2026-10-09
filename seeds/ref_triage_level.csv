@@ -1,0 +1,6 @@
+triage_code,triage_label,urgency_rank,max_target_wait_minutes
+T1,Immediate,1,5
+T2,Very urgent,2,15
+T3,Urgent,3,30
+T4,Standard,4,60
+T5,Non urgent,5,120

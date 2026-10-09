@@ -1,0 +1,32 @@
+version: 2
+
+unit_tests:
+  - name: stg_patients_keeps_latest_version_and_cleans_values
+    description: Duplicate patient ids collapse to the latest version, text and dates are normalized.
+    model: stg_patients
+    given:
+      - input: source('bronze', 'raw_patients')
+        rows:
+          - {patient_id: " p1 ", birth_date: "1990-05-01", gender: "M", canton: "bs", preferred_language: "de", insurance_type: "Basic", updated_at: "2025-01-01 10:00:00", _loaded_at: "2025-02-01 00:00:00", _source_file: "x.csv"}
+          - {patient_id: "P1", birth_date: "1990-05-01", gender: "M", canton: "ZH", preferred_language: "de", insurance_type: "Basic", updated_at: "2025-03-01 10:00:00", _loaded_at: "2025-02-01 00:00:00", _source_file: "x.csv"}
+          - {patient_id: "P2", birth_date: "15.03.1985", gender: " female ", canton: "BE", preferred_language: "FR", insurance_type: "complementary ", updated_at: "2025-01-01 10:00:00", _loaded_at: "2025-02-01 00:00:00", _source_file: "x.csv"}
+          - {patient_id: "P3", birth_date: "0000-00-00", gender: "X", canton: "GE", preferred_language: "FR", insurance_type: "basic", updated_at: "2025-01-01 10:00:00", _loaded_at: "2025-02-01 00:00:00", _source_file: "x.csv"}
+    expect:
+      rows:
+        - {patient_id: "P1", birth_date: "1990-05-01", gender: "male", canton: "ZH", insurance_type: "basic"}
+        - {patient_id: "P2", birth_date: "1985-03-15", gender: "female", canton: "BE", insurance_type: "complementary"}
+        - {patient_id: "P3", birth_date: null, gender: "unknown", canton: "GE", insurance_type: "basic"}
+
+  - name: stg_consultations_flags_invalid_rows
+    description: Duplicates are removed and invalid rows get a rejection reason.
+    model: stg_consultations
+    given:
+      - input: source('bronze', 'raw_consultations')
+        rows:
+          - {consultation_id: "C1", patient_id: "P1", doctor_id: "D1", channel: "Phone ", triage_code: "t3", requested_at: "2025-01-01 10:00:00", started_at: "2025-01-01 10:10:00", ended_at: "2025-01-01 10:20:00", outcome: "RESOLVED", satisfaction_score: "5", _loaded_at: "2025-02-01 00:00:00", _source_file: "x.csv"}
+          - {consultation_id: "C1", patient_id: "P1", doctor_id: "D1", channel: "Phone ", triage_code: "t3", requested_at: "2025-01-01 10:00:00", started_at: "2025-01-01 10:10:00", ended_at: "2025-01-01 10:20:00", outcome: "RESOLVED", satisfaction_score: "5", _loaded_at: "2025-02-01 00:00:00", _source_file: "x.csv"}
+          - {consultation_id: "C2", patient_id: "P1", doctor_id: "D1", channel: "video", triage_code: "T2", requested_at: "2025-01-01 10:00:00", started_at: "2025-01-01 10:30:00", ended_at: "2025-01-01 10:20:00", outcome: "referred", satisfaction_score: "9", _loaded_at: "2025-02-01 00:00:00", _source_file: "x.csv"}
+    expect:
+      rows:
+        - {consultation_id: "C1", channel: "phone", triage_code: "T3", outcome: "resolved", satisfaction_score: 5, is_valid: true, rejection_reason: null}
+        - {consultation_id: "C2", channel: "video", triage_code: "T2", outcome: "referred", satisfaction_score: null, is_valid: false, rejection_reason: "end_before_start"}

@@ -1,0 +1,27 @@
+name: telehealth_analytics
+version: "1.0.0"
+config-version: 2
+profile: telehealth
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  telehealth_analytics:
+    silver:
+      +schema: silver
+      +materialized: view
+    gold:
+      +schema: gold
+      +materialized: table
+    marts:
+      +schema: gold
+      +materialized: table
+
+seeds:
+  telehealth_analytics:
+    +schema: silver

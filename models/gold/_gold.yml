@@ -1,0 +1,94 @@
+version: 2
+
+models:
+  - name: dim_date
+    description: Calendar dimension, 2024-01-01 to 2025-12-31.
+    columns:
+      - name: date_key
+        description: Integer key in the form YYYYMMDD.
+        data_tests: [unique, not_null]
+
+  - name: dim_patient
+    description: >
+      One row per patient, plus an unknown member (patient_id = -1) used by facts
+      that reference a patient we never received. Patients are pseudonymized ids only.
+    columns:
+      - name: patient_key
+        data_tests: [unique, not_null]
+      - name: patient_id
+        data_tests: [unique, not_null]
+
+  - name: dim_doctor
+    description: One row per doctor, plus an unknown member.
+    columns:
+      - name: doctor_key
+        data_tests: [unique, not_null]
+      - name: doctor_id
+        data_tests: [unique, not_null]
+
+  - name: dim_channel
+    description: Consultation channel (phone, app, video, other).
+    columns:
+      - name: channel_key
+        data_tests: [unique, not_null]
+
+  - name: dim_triage_level
+    description: Triage level with the target waiting time, plus a "not triaged" member.
+    columns:
+      - name: triage_key
+        data_tests: [unique, not_null]
+
+  - name: fct_consultation
+    description: >
+      Fact table. Grain is one row per valid consultation. Rejected rows are in
+      dq_rejected_consultations.
+    columns:
+      - name: consultation_key
+        data_tests: [unique, not_null]
+      - name: consultation_id
+        data_tests: [unique, not_null]
+      - name: date_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_date')
+                field: date_key
+      - name: patient_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_patient')
+                field: patient_key
+      - name: doctor_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_doctor')
+                field: doctor_key
+      - name: channel_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_channel')
+                field: channel_key
+      - name: triage_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_triage_level')
+                field: triage_key
+      - name: duration_minutes
+        data_tests: [non_negative]
+      - name: wait_minutes
+        data_tests: [non_negative]
+      - name: satisfaction_score
+        data_tests:
+          - value_between:
+              arguments:
+                min_value: 1
+                max_value: 5

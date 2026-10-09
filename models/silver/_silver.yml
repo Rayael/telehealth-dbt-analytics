@@ -1,0 +1,82 @@
+version: 2
+
+models:
+  - name: stg_patients
+    description: One clean row per patient. Latest delivered version wins.
+    columns:
+      - name: patient_id
+        data_tests: [unique, not_null]
+      - name: gender
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [male, female, unknown]
+      - name: birth_date
+        description: Null when the source date was missing or impossible.
+
+  - name: stg_doctors
+    description: One clean row per doctor.
+    columns:
+      - name: doctor_id
+        data_tests: [unique, not_null]
+      - name: specialty
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [General medicine, Pediatrics, Dermatology, Psychiatry, Gynecology]
+
+  - name: stg_consultations
+    description: >
+      One row per consultation, typed and standardized. Invalid rows are flagged
+      with rejection_reason instead of being deleted.
+    columns:
+      - name: consultation_id
+        data_tests: [unique, not_null]
+      - name: channel
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [phone, app, video, other]
+      - name: outcome
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [resolved, prescription, referred, emergency_redirect, unknown]
+      - name: satisfaction_score
+        data_tests:
+          - value_between:
+              arguments:
+                min_value: 1
+                max_value: 5
+      - name: rejection_reason
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [missing_timestamp, missing_doctor, end_before_start, start_before_request]
+              config:
+                where: "rejection_reason is not null"
+
+  - name: dq_rejected_consultations
+    description: Quarantine of consultations kept out of the fact table, with the reason.
+    columns:
+      - name: consultation_id
+        data_tests: [unique, not_null]
+
+  - name: dq_reconciliation
+    description: >
+      Bronze to gold row counts. unexplained_rows must be 0, otherwise rows were
+      lost somewhere in the pipeline.
+    columns:
+      - name: unexplained_rows
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [0]
+                quote: false
+
+seeds:
+  - name: ref_triage_level
+    description: Reference table for triage levels and their target waiting time.
+    columns:
+      - name: triage_code
+        data_tests: [unique, not_null]
