@@ -2,7 +2,7 @@
 
 ![Overview of the project site](docs/img/site-overview.png)
 
-Live site with the charts, the data model and the dbt docs: https://YOUR_USER.github.io/telehealth-dbt-analytics/
+Live site with the charts, the data model and the dbt docs: https://Rayael.github.io/telehealth-dbt-analytics/
 
 This is a practice project. I wanted one place where I could show how I work with data from raw files to a reporting model: loading messy sources, cleaning them in layers, testing the result and serving a star schema to Power BI. It runs on dbt and DuckDB, so anyone can clone it and run it without an account or a cloud bill.
 
